@@ -45,6 +45,8 @@ def handle_cmd(cmd, chan, ip):
 class BasicSshHoneypot(paramiko.ServerInterface):
 
     client_ip = None
+    ips = []
+    ip_set = set()
 
     def __init__(self, client_ip):
         self.client_ip = client_ip
@@ -53,13 +55,19 @@ class BasicSshHoneypot(paramiko.ServerInterface):
     def check_channel_request(self, kind, chanid):
         logging.info('client called check_channel_request ({}): {}'.format(
                     self.client_ip, kind))
+        print('client called check_channel_request ({}): {}'.format(
+                    self.client_ip, kind))
         if kind == 'session':
             return paramiko.OPEN_SUCCEEDED
 
     def get_allowed_auths(self, username):
         logging.info('client called get_allowed_auths ({}) with username {}'.format(
                     self.client_ip, username))
-        return "publickey,password"
+        exists = self.track_ip(self.client_ip)
+        if exists == 1:
+            return "password"
+        else:
+            return "publickey,password"
 
     def check_auth_publickey(self, username, key):
         fingerprint = u(hexlify(key.get_fingerprint()))
@@ -87,6 +95,14 @@ class BasicSshHoneypot(paramiko.ServerInterface):
                     self.client_ip, username, command))
         return True
 
+    def track_ip(self, ip):
+        if ip not in self.ip_set:
+            self.ips.append(ip)
+            self.ip_set.add(ip)
+            return 0
+        else:
+            return 1
+
 
 def handle_connection(client, addr):
 
@@ -105,7 +121,6 @@ def handle_connection(client, addr):
         except paramiko.SSHException:
             print('*** SSH negotiation failed.')
             raise Exception("SSH negotiation failed")
-
         # wait for auth
         chan = transport.accept(10)
         if chan is None:
