@@ -168,7 +168,7 @@ def handle_connection(client, addr):
                 
                 chan.send("\r\n")
                 command = command.rstrip()
-                logging.info('Command receied ({}): {}'.format(client_ip, command))
+                logging.info('Command received ({}): {}'.format(client_ip, command))
 
                 if command == "exit":
                     settings.addLogEntry("Connection closed (via exit command): " + client_ip + "\n")
