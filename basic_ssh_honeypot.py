@@ -92,7 +92,8 @@ class BasicSshHoneypot(paramiko.ServerInterface):
         command_text = str(command.decode("utf-8"))
 
         logging.info('client sent command via check_channel_exec_request ({}): {}'.format(
-                    self.client_ip, username, command))
+                    self.client_ip, command))
+                    # self.client_ip, username, command)) # Username exists?
         return True
 
     def track_ip(self, ip):
